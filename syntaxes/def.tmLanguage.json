@@ -20,7 +20,7 @@
         },
         {
             "name": "entity.name.type.def",
-            "match": "\\$\\S"
+            "match": "\\$[^ #]"
         },
         {
             "name": "constant.numeric.def",
@@ -28,7 +28,7 @@
         },
         {
             "name": "invalid.illegal.def",
-            "match": "\\$(\\s|$)"
+            "match": "\\$(\\s|$|(?=#))"
         },
         {
             "name": "keyword.operator.def",
