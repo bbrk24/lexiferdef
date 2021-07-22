@@ -1,0 +1,51 @@
+{
+	"$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+	"name": "Lexifer",
+	"patterns": [
+        {
+            "name": "comment.line.number-sign.def",
+            "match": "#.*$"
+        },
+        {
+            "name": "support.constant.def",
+            "match": "std-((ipa|digraph)-features|assimilations)|coronal-metathesis"
+        },
+        {
+            "name": "keyword.other.def",
+            "match": "(with|letters|random-rate|words|filter|reject):"
+        },
+        {
+            "name": "variable.other.def",
+            "match": "(?<!\\$)[A-Z]"
+        },
+        {
+            "name": "entity.name.type.def",
+            "match": "\\$."
+        },
+        {
+            "name": "constant.numeric.def",
+            "match": "(?<=:)\\s*\\d+"
+        },
+        {
+            "name": "constant.character.escape.def",
+            "match": "\\\\."
+        },
+        {
+            "name": "string.regexp.def",
+            "match": "(?<=reject:).+$|[:;][^>]+"
+        },
+        {
+            "name": "invalid.illegal.def",
+            "match": "\\$"
+        },
+        {
+            "name": "keyword.operator.def",
+            "match": "[%!?>]"
+        },
+        {
+            "name": "string.unquoted.def",
+            "match": "[^\\-+;]"
+        }
+    ],
+	"scopeName": "source.def"
+}
