@@ -4,15 +4,15 @@
 	"patterns": [
         {
             "name": "comment.line.number-sign.def",
-            "match": "#.*$"
+            "match": "#.*"
         },
         {
-            "name": "support.constant.def",
-            "match": "std-((ipa|digraph)-features|assimilations)|coronal-metathesis"
+            "name": "constant.language.def",
+            "match": "(std-((ipa|digraph)-features|assimilations))|coronal-metathesis"
         },
         {
             "name": "keyword.other.def",
-            "match": "(with|letters|random-rate|words|filter|reject):"
+            "match": "(with|letters|random-rate|words|filter|reject)(?=:)"
         },
         {
             "name": "variable.other.def",
@@ -20,31 +20,23 @@
         },
         {
             "name": "entity.name.type.def",
-            "match": "\\$."
+            "match": "\\$\\S"
         },
         {
             "name": "constant.numeric.def",
             "match": "(?<=:)\\s*\\d+"
         },
         {
-            "name": "constant.character.escape.def",
-            "match": "\\\\."
-        },
-        {
-            "name": "string.regexp.def",
-            "match": "(?<=reject:).+$|[:;][^>]+"
-        },
-        {
             "name": "invalid.illegal.def",
-            "match": "\\$"
+            "match": "\\$(\\s|$)"
         },
         {
             "name": "keyword.operator.def",
-            "match": "[%!?>]"
+            "match": "[%!?]"
         },
         {
             "name": "string.unquoted.def",
-            "match": "[^\\-+;]"
+            "match": "(?<=[^h][=:;>$A-Z?!])[^#;>$A-Z?!=]+|(?<=^|[%+\\-])[^=:\\-+#]+"
         }
     ],
 	"scopeName": "source.def"
