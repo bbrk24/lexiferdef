@@ -1,6 +1,6 @@
 {
     "name": "lexiferdef",
-    "version": "0.1.5",
+    "version": "0.1.6",
     "engines": {
         "vscode": "^1.58.0"
     },

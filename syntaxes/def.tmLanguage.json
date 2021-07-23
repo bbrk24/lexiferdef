@@ -24,7 +24,7 @@
         },
         {
             "name": "constant.numeric.def",
-            "match": "(?<=:)\\s*[0-9\\.]+"
+            "match": "(?<=:)\\s*[0-9.]+"
         },
         {
             "name": "invalid.illegal.def",
@@ -36,7 +36,7 @@
         },
         {
             "name": "string.unquoted.def",
-            "match": "(?<=[=;>$A-Z0-9?!])[^#;>$A-Z?!=:0-9]+|(?<=^|[%+\\-])[^=\\-+#]+|(?<!with):\\K[^#;>$A-Z?!=0-9:]+"
+            "match": "(?<=[=;>$A-Z0-9?!])[^#;>$A-Z?!=:0-9]+|(?<=^|[%+\\-])[^=\\-+#:]+|(?<!with|random-rate):\\K[^#;>$A-Z?!=0-9:]+"
         }
     ],
 	"scopeName": "source.def"
