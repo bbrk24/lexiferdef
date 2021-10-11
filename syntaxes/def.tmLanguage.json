@@ -12,7 +12,7 @@
         },
         {
             "name": "keyword.other.def",
-            "match": "(with|letters|random-rate|words|filter|reject)(?=:)"
+            "match": "(with|letters|random-rate|words|filter|reject|categories)(?=:)"
         },
         {
             "name": "variable.other.def",
