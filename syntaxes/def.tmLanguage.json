@@ -8,7 +8,7 @@
         },
         {
             "name": "constant.language.def",
-            "match": "(std-((ipa|digraph)-features|assimilations))|coronal-metathesis"
+            "match": "(std-((ipa|digraph)-features|(assimila|rejec)tions))|coronal-metathesis"
         },
         {
             "name": "keyword.other.def",
@@ -16,27 +16,27 @@
         },
         {
             "name": "variable.other.def",
-            "match": "(?<!\\$)[A-Z]"
+            "match": "^[A-Z]\\s|(?<=[^$])[A-Z]"
         },
         {
             "name": "entity.name.type.def",
-            "match": "\\$[^ #]"
+            "match": "\\$[^#\\s]|\\\\\\d"
         },
         {
             "name": "constant.numeric.def",
-            "match": "(?<=:)\\s*[0-9.]+"
+            "match": "(?<=:)\\s*[0-9.]+|(?<={(\\d|,)*)\\d"
         },
         {
             "name": "invalid.illegal.def",
-            "match": "\\$(\\s|$|(?=#))"
+            "match": "\\{,|^[A-Z]{2,}"
         },
         {
             "name": "keyword.operator.def",
-            "match": "[%!?]"
+            "match": "[%!?+*]"
         },
         {
             "name": "string.unquoted.def",
-            "match": "(?<=[=;>$A-Z0-9?!])[^#;>$A-Z?!=:0-9]+|(?<=^|[%+\\-])[^=\\-+#:]+|(?<!with|random-rate):\\K[^#;>$A-Z?!=0-9:]+"
+            "match": "(?<=[^{]\\d+)([^\\^#;>$A-Z?!=:0-9+|*\\.(){}\\[\\]\\\\]|\\\\\\D)+|(?<=\\[)([^\\^#;>$A-Z?!=:0-9+|*\\.(){}\\[\\]\\\\-]|\\\\\\D)+|(?<=\\?)([^\\^#;<>$A-Z?!=:0-9+|*,\\.(){}\\[\\]\\\\]|\\\\\\D)+|(?<=[\\^=;<>$A-Z!*\\.|()}\\]])([^\\^#;>$A-Z?!=:0-9+|*\\.(){}\\[\\]\\\\]|\\\\\\D)+|(?<=^|[%+\\-])([^\\^#;>$A-Z?!=:0-9+*|\\.(){}\\[\\]\\\\]|\\\\\\D)+|(?<!with|random-rate):\\K([^\\^#;>$A-Z?!0-9:+*\\.(){}\\[\\]\\\\]|\\\\\\D)+|(?<!:)\\d"
         }
     ],
 	"scopeName": "source.def"

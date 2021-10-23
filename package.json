@@ -1,6 +1,6 @@
 {
     "name": "lexiferdef",
-    "version": "0.1.7",
+    "version": "0.1.8",
     "engines": {
         "vscode": "^1.58.0"
     },
@@ -10,7 +10,7 @@
     "contributes": {
         "languages": [{
             "id": "def",
-            "aliases": ["Lexifer", "def"],
+            "aliases": ["Lexifer Definition", "def"],
             "extensions": [".def"],
             "configuration": "./language-configuration.json"
         }],
