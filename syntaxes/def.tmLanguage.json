@@ -3,6 +3,11 @@
   "name": "Lexifer",
   "patterns": [
     {
+      "name": "markup.heading.def",
+      "begin": "^#{2,}\\s*$",
+      "while": "^#\\s"
+    },
+    {
       "name": "comment.line.number-sign.def",
       "match": "#.*"
     },
