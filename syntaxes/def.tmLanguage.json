@@ -8,14 +8,14 @@
         },
         {
             "name": "constant.language.def",
-            "match": "(std-((ipa|digraph)-features|(assimila|rejec)tions))|coronal-metathesis"
+            "match": "(?<=:|\\s)(std-((ipa|digraph)-features|(assimila|rejec)tions))|coronal-metathesis\\s"
         },
         {
             "name": "keyword.other.def",
-            "match": "(with|letters|random-rate|words|filter|reject|categories)(?=:)"
+            "match": "^\\s*(with|letters|random-rate|words|filter|reject|categories)(?=:)"
         },
         {
-            "name": "variable.other.def",
+            "name": "entity.name.tag.def",
             "match": "^[A-Z]\\s|(?<=[^$])[A-Z]"
         },
         {
@@ -28,7 +28,7 @@
         },
         {
             "name": "invalid.illegal.def",
-            "match": "\\{,|^[A-Z]{2,}"
+            "match": "\\{,(.*?})?|^[A-Z]{2,}"
         },
         {
             "name": "keyword.operator.def",
@@ -36,7 +36,7 @@
         },
         {
             "name": "string.unquoted.def",
-            "match": "(?<=[^{]\\d+)([^\\^#;>$A-Z?!=:0-9+|*\\.(){}\\[\\]\\\\]|\\\\\\D)+|(?<=\\[)([^\\^#;>$A-Z?!=:0-9+|*\\.(){}\\[\\]\\\\-]|\\\\\\D)+|(?<=\\?)([^\\^#;<>$A-Z?!=:0-9+|*,\\.(){}\\[\\]\\\\]|\\\\\\D)+|(?<=[\\^=;<>$A-Z!*\\.|()}\\]])([^\\^#;>$A-Z?!=:0-9+|*\\.(){}\\[\\]\\\\]|\\\\\\D)+|(?<=^|[%+\\-])([^\\^#;>$A-Z?!=:0-9+*|\\.(){}\\[\\]\\\\]|\\\\\\D)+|(?<!with|random-rate):\\K([^\\^#;>$A-Z?!0-9:+*\\.(){}\\[\\]\\\\]|\\\\\\D)+|(?<!:)\\d"
+            "match": "(?<=[^{])\\d+\\K(:*[^!#$(-+.0-;=-?A-^{-}]|\\\\\\D)+(:+(?!\\d))?|(?<=\\[|\\s)(:*[^!#$(-+\\-.0-;=-?A-^{-}\\s]|\\\\\\D)(:*[^!#$(-+.0-;=-?A-^{-}\\s]|\\\\\\D)*(:+(?!\\d))?|(?<=\\?)(:*[^!#$(-+.0-?A-^{-}]|\\\\\\D)+(:+(?!\\d))?|(?<=[!(-*.;->A-Z\\]^|}]|\\$.)(:*[^!#$(-+.0-;=-?A-^{-}\\s]|\\\\\\D)+(:+(?!\\d))?|(?<=^|[%+\\-])(:*[^!#$(-+.0-;=-?A-^{-}\\s]|\\\\\\D)+(:+(?!\\d))?|(?<!with|random-rate):\\K(:*[^!#$(-+.0-;=-?A-\\]{}]|\\\\\\D)+(:+(?!\\d))?|(?<!:)\\d"
         }
     ],
 	"scopeName": "source.def"
