@@ -2,7 +2,7 @@
 
 This extension provides syntax highlighting for Lexifer definitions.
 
-![Preview with the Solarized Dark theme](images/SolarizedDark.png)
+![Preview with the Solarized Dark theme](images/example.png)
 
 ## Known Issues
 
