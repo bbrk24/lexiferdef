@@ -1,43 +1,47 @@
 {
-	"$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
-	"name": "Lexifer",
-	"patterns": [
-        {
-            "name": "comment.line.number-sign.def",
-            "match": "#.*"
-        },
-        {
-            "name": "constant.language.def",
-            "match": "(?<=:|\\s)(std-((ipa|digraph)-features|(assimila|rejec)tions))|coronal-metathesis\\s"
-        },
-        {
-            "name": "keyword.other.def",
-            "match": "^\\s*(with|letters|random-rate|words|filter|reject|categories)(?=:)"
-        },
-        {
-            "name": "entity.name.tag.def",
-            "match": "^[A-Z]\\s|(?<=[^$])[A-Z]"
-        },
-        {
-            "name": "entity.name.type.def",
-            "match": "\\$[^#\\s]|\\\\\\d"
-        },
-        {
-            "name": "constant.numeric.def",
-            "match": "(?<=:)\\s*[0-9.]+|(?<={(\\d|,)*)\\d"
-        },
-        {
-            "name": "invalid.illegal.def",
-            "match": "\\{,(.*?})?|^[A-Z]{2,}"
-        },
-        {
-            "name": "keyword.operator.def",
-            "match": "[%!?+*]"
-        },
-        {
-            "name": "string.unquoted.def",
-            "match": "(?<=[^{])\\d+\\K(:*[^!#$(-+.0-;=-?A-^{-}]|\\\\\\D)+(:+(?!\\d))?|(?<=\\[|\\s)(:*[^!#$(-+\\-.0-;=-?A-^{-}\\s]|\\\\\\D)(:*[^!#$(-+.0-;=-?A-^{-}\\s]|\\\\\\D)*(:+(?!\\d))?|(?<=\\?)(:*[^!#$(-+.0-?A-^{-}]|\\\\\\D)+(:+(?!\\d))?|(?<=[!(-*.;->A-Z\\]^|}]|\\$.)(:*[^!#$(-+.0-;=-?A-^{-}\\s]|\\\\\\D)+(:+(?!\\d))?|(?<=^|[%+\\-])(:*[^!#$(-+.0-;=-?A-^{-}\\s]|\\\\\\D)+(:+(?!\\d))?|(?<!with|random-rate):\\K(:*[^!#$(-+.0-;=-?A-\\]{}]|\\\\\\D)+(:+(?!\\d))?|(?<!:)\\d"
-        }
-    ],
-	"scopeName": "source.def"
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "Lexifer",
+  "patterns": [
+    {
+      "name": "comment.line.number-sign.def",
+      "match": "#.*"
+    },
+    {
+      "name": "constant.language.def",
+      "match": "(?<=:|\\s)(std-((ipa|digraph)-features|(assimila|rejec)tions))|coronal-metathesis\\s"
+    },
+    {
+      "name": "keyword.other.def",
+      "match": "^\\s*(with|letters|random-rate|words|filter|reject|categories)(?=:)"
+    },
+    {
+      "name": "entity.name.tag.def",
+      "match": "^[A-Z]\\s|(?<=[^$])[A-Z]"
+    },
+    {
+      "name": "entity.name.type.def",
+      "match": "\\$[^#\\s]|\\\\([89]|[1-7](?![0-7]{2}))"
+    },
+    {
+      "name": "constant.character.escape.def",
+      "match": "\\\\([$(-+\\-.0?BDSW\\[-^bdfnrstvw{|]|[pP]\\{.*?}|u[0-9a-fA-F]{4}|x([0-9a-fA-F]{2}|\\{[0-9a-fA-F]{4}})|c.|[0-7]{3})|\\[\\\\b\\]"
+    },
+    {
+      "name": "constant.numeric.def",
+      "match": "(?<=:)\\s*[0-9.]+|(?<={(\\d|,)*)\\d"
+    },
+    {
+      "name": "invalid.illegal.def",
+      "match": "\\{,(.*?})?|^[A-Z]{2,}"
+    },
+    {
+      "name": "keyword.operator.def",
+      "match": "[%!?+*]"
+    },
+    {
+      "name": "string.unquoted.def",
+      "match": "(?<=[^{])\\d+\\K(:*[^!#$(-+.0-;=-?A-^{-}])+(:+(?!\\d))?|(?<=\\[|\\s)(:*[^!#$(-+\\-.0-;=-?A-^{-}\\s])(:*[^!#$(-+.0-;=-?A-^{-}\\s])*(:+(?!\\d))?|(?<=\\?)(:*[^!#$(-+.0-?A-^{-}])+(:+(?!\\d))?|(?<=[!(-*.;->A-Z\\]^|}]|[$\\\\].|\\\\c.)(:*[^!#$(-+.0-;=-?A-^{-}\\s])+(:+(?!\\d))?|(?<=^|[%+\\-])(:*[^!#$(-+.0-;=-?A-^{-}\\s])+(:+(?!\\d))?|(?<!with|random-rate):\\K(:*[^!#$(-+.0-;=-?A-\\]{}])+(:+(?!\\d))?|(?<![:\\\\])\\d"
+    }
+  ],
+  "scopeName": "source.def"
 }

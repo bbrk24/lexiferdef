@@ -1,23 +1,32 @@
 {
-    "name": "lexiferdef",
-    "version": "0.1.9",
-    "engines": {
-        "vscode": "^1.58.0"
-    },
-    "categories": [
-        "Programming Languages"
+  "name": "lexiferdef",
+  "version": "0.1.10",
+  "engines": {
+    "vscode": "^1.58.0"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "contributes": {
+    "languages": [
+      {
+        "id": "def",
+        "aliases": ["Lexifer Definition", "def"],
+        "extensions": [".def"],
+        "configuration": "./language-configuration.json"
+      }
     ],
-    "contributes": {
-        "languages": [{
-            "id": "def",
-            "aliases": ["Lexifer Definition", "def"],
-            "extensions": [".def"],
-            "configuration": "./language-configuration.json"
-        }],
-        "grammars": [{
-            "language": "def",
-            "scopeName": "source.def",
-            "path": "./syntaxes/def.tmLanguage.json"
-        }]
-    }
+    "grammars": [
+      {
+        "language": "def",
+        "scopeName": "source.def",
+        "path": "./syntaxes/def.tmLanguage.json"
+      }
+    ]
+  },
+  "author": "bbrk24",
+  "repository": {
+      "type": "git",
+      "url": "https://github.com/bbrk24/lexiferdef.git"
+  }
 }

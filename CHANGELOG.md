@@ -1,9 +1,9 @@
-# Change Log
+# Changelog
 
-All notable changes to the "lexiferdef" extension will be documented in this file.
+All notable changes to this extension will be documented in this file.
 
-Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
+## Versions 0.1.x
 
-## [Unreleased]
-
-- Initial release
+These were before the extension was available for public use, and the changes
+they made are not well-documented. The changes can best be found by looking at
+the git history.
