@@ -1,6 +1,6 @@
 {
   "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
-  "name": "Lexifer",
+  "name": "Lexifer Definition",
   "patterns": [
     {
       "name": "markup.heading.def",
@@ -20,12 +20,8 @@
       "match": "^\\s*(with|letters|random-rate|words|filter|reject|categories)(?=:)"
     },
     {
-      "name": "entity.name.tag.def",
-      "match": "^[A-Z]\\s|(?<=[^$])[A-Z]"
-    },
-    {
-      "name": "entity.name.type.def",
-      "match": "\\$[^#\\s]|\\\\([89]|[1-7](?![0-7]{2}))"
+      "name": "variable.parameter.def",
+      "match": "\\$[1-9]|\\\\([89]|[1-7](?![0-7]{2}))"
     },
     {
       "name": "constant.character.escape.def",
@@ -37,7 +33,7 @@
     },
     {
       "name": "invalid.illegal.def",
-      "match": "\\{,(.*?})?|^[A-Z]{2,}"
+      "match": "\\{,(.*?})?|^[A-Z]{2,}|^([<=>])\\2+.*$"
     },
     {
       "name": "keyword.operator.def",
