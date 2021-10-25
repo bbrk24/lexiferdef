@@ -33,7 +33,7 @@
     },
     {
       "name": "invalid.illegal.def",
-      "match": "\\{,(.*?})?|^[A-Z]{2,}|^([<=>])\\2+.*$"
+      "match": "\\{,(.*?})?|^[A-Z]{2,}|^([<=>])\\2+.*$|\\\\[^$(-+\\-.0-9?BDPSW\\[-^bcdfnpr-x{|]"
     },
     {
       "name": "keyword.operator.def",

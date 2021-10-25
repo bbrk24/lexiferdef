@@ -1,6 +1,7 @@
 # Lexifer Definitions
 
-This extension provides syntax highlighting for Lexifer definitions.
+This extension provides syntax highlighting, semantic highlighting, and "go to
+definition" actions for Lexifer definition files.
 
 ![Preview with the Solarized Dark theme](images/example.png)
 

@@ -13,78 +13,134 @@ const tokenModifiers: Modifier[] = ['declaration', 'definition'];
 const legend = new vscode.SemanticTokensLegend(tokenTypes, tokenModifiers);
 
 class GroupNames {
-    classNames = new Set<string>();
-    macroNames = new Set<string>();
-    categoryNames = new Set<string>();
+    classNames = new Map<string, vscode.Location>();
+    macroNames = new Map<string, vscode.Location>();
+    categoryNames = new Map<string, vscode.Location>();
 }
 
 class Token {
     readonly range: vscode.Range;
-    
+
     constructor(
         lineNumber: number,
         firstChar: number,
-        length: number,
+        readonly text: string,
         readonly type: Type,
         readonly modifiers: Modifier[]
     ) {
         this.range = new vscode.Range(
             new vscode.Position(lineNumber, firstChar),
-            new vscode.Position(lineNumber, firstChar + length)
+            new vscode.Position(lineNumber, firstChar + text.length)
         );
     }
 }
 
-class Provider implements vscode.DocumentSemanticTokensProvider {
+class Provider implements vscode.DocumentSemanticTokensProvider, vscode.DefinitionProvider {
     private groupNames: GroupNames = new GroupNames();
+    private allTokens: Token[] = [];
 
     provideDocumentSemanticTokens(document: vscode.TextDocument) {
         const tokenBuilder = new vscode.SemanticTokensBuilder(legend);
-        const docText = document.getText();
 
-        this.getGroups(docText);
-        const tokens = this.findRanges(docText);
+        this.getGroups(document);
+        this.findRanges(document);
 
-        tokens.forEach(el =>
+        this.allTokens.forEach(el =>
             tokenBuilder.push(el.range, el.type, el.modifiers)
         );
 
         return tokenBuilder.build();
     }
 
-    private getGroups(docText: string) {
-        const lines = docText.split('\n');
+    provideDefinition(
+        document: vscode.TextDocument,
+        position: vscode.Position,
+        token: vscode.CancellationToken
+    ) {
+        // find the token
+        let containingToken: Token | undefined;
+
+        for (const token of this.allTokens) {
+            if (token.range.contains(position)) {
+                containingToken = token;
+                break;
+            }
+        }
+
+        if (!containingToken) {
+            return undefined;
+        }
+
+        // okay, we know what token it belongs to, now find its corresponding definition
+        let resultRange: vscode.Range | undefined;
+        switch (containingToken.type) {
+        case categoryType:
+            resultRange = this.groupNames.categoryNames.get(containingToken.text)?.range;
+            break;
+        case macroType:
+            resultRange = this.groupNames.macroNames.get(containingToken.text)?.range;
+            break;
+        case phonemeClassType:
+            resultRange = this.groupNames.classNames.get(containingToken.text)?.range;
+            break;
+        }
+
+        if (!resultRange) {
+            return undefined;
+        }
+
+        return new vscode.Location(document.uri, resultRange);
+    }
+
+    private getGroups(document: vscode.TextDocument) {
+        const lines = document.getText().split('\n');
         this.groupNames = new GroupNames();
 
-        for (let line of lines) {
-            // remove any comments or excess whitespace
-            line = line.split('#')[0].trim();
+        const declaredCategories = new Set<string>();
 
-            if (line.startsWith('categories:')) {
+        for (let i = 0; i < lines.length; ++i) {
+            // remove any comments or excess whitespace
+            const origLine = lines[i].split('#')[0];
+            const trimmedLine = origLine.trim();
+
+            if (trimmedLine.startsWith('categories:')) {
                 // parse out category names
-                let cats = line.substring(11).split(/\s+/gu);
+                let cats = trimmedLine.substring(11).split(/\s+/gu);
                 // remove any weights provided and add them to the set
-                cats.forEach(el => 
-                    this.groupNames.categoryNames.add(el.split(':')[0])
+                cats.forEach(el =>
+                    declaredCategories.add(el.split(':')[0])
                 );
-            } else if (line.includes('=')) {
+            } else if (trimmedLine.includes('=')) {
                 // determine whether it's a class or a macro
-                const name = line.split('=')[0].trimEnd();
+                const name = trimmedLine.split('=')[0].trimEnd();
                 if (name[0] === '$') {
                     // it's a macro
-                    this.groupNames.macroNames.add(name);
+                    this.groupNames.macroNames.set(
+                        name,
+                        new vscode.Location(document.uri, new vscode.Position(i, origLine.indexOf('$')))
+                    );
                 } else if (name.length === 1) {
                     // it's a class
-                    this.groupNames.classNames.add(name);
+                    this.groupNames.classNames.set(
+                        name,
+                        new vscode.Location(document.uri, new vscode.Position(i, origLine.indexOf(name)))
+                    );
+                } else if (declaredCategories.has(name)) {
+                    // it's a category. it already exists, but the location wasn't known
+                    this.groupNames.categoryNames.set(
+                        name,
+                        new vscode.Location(document.uri, new vscode.Position(i, origLine.indexOf(name)))
+                    );
                 }
-                // otherwise it's either a category or a mistake
+                // otherwise it's a mistake
             }
         }
     }
 
-    private findRanges(docText: string): Token[] {
-        const lines = docText.split('\n');
-        const retVal: Token[] = [];
+    private findRanges(document: vscode.TextDocument) {
+        const uri = document.uri;
+        const lines = document.getText().split('\n');
+        this.allTokens = [];
 
         for (let i = 0; i < lines.length; ++i) {
             const origLine = lines[i];
@@ -105,21 +161,21 @@ class Provider implements vscode.DocumentSemanticTokensProvider {
 
                     // figure out which macro it is
                     let currMacro = '';
-                    for (const macroName of this.groupNames.macroNames) {
+                    for (const [macroName, _] of this.groupNames.macroNames) {
                         if (trimmedLine.startsWith(macroName)) {
                             currMacro = macroName;
                             break;
                         }
                     }
 
-                    retVal.push(
-                        new Token(i, startIndex, currMacro.length, macroType, ['declaration', 'definition'])
+                    this.allTokens.push(
+                        new Token(i, startIndex, currMacro, macroType, ['declaration', 'definition'])
                     );
                     
                     for (let j = trimmedLine.indexOf('=') + 1; j < trimmedLine.length; ++j) {
-                        if (this.groupNames.classNames.has(trimmedLine[j])) {
-                            retVal.push(
-                                new Token(i, startIndex + j, 1, phonemeClassType, [])
+                        if (this.groupNames.classNames.get(trimmedLine[j])) {
+                            this.allTokens.push(
+                                new Token(i, startIndex + j, trimmedLine[j], phonemeClassType, [])
                             );
                         }
                     }
@@ -128,14 +184,14 @@ class Provider implements vscode.DocumentSemanticTokensProvider {
                     const itemName = trimmedLine.split(/\s|=/u)[0];
                     if (itemName.length === 1) {
                         // it's a class name
-                        retVal.push(
-                            new Token(i, origLine.indexOf(itemName), 1, phonemeClassType, ['declaration', 'definition'])
+                        this.allTokens.push(
+                            new Token(i, origLine.indexOf(itemName), itemName, phonemeClassType, ['declaration', 'definition'])
                         );
-                    } else if (this.groupNames.categoryNames.has(itemName)) {
+                    } else if (this.groupNames.categoryNames.get(itemName)) {
                         // add one token for the category name, and then parse out any others it may reference
-                        retVal.push(
-                            new Token(i, origLine.indexOf(itemName), itemName.length, categoryType, ['definition']),
-                            ...this.tokensForWordShape(origLine, i, origLine.indexOf('='))
+                        this.allTokens.push(
+                            new Token(i, origLine.indexOf(itemName), itemName, categoryType, ['definition']),
+                            ...this.tokensForWordShape(document, i, origLine.indexOf('='))
                         );
                     }
                     // else, it's not recognized, just ignore it
@@ -144,43 +200,43 @@ class Provider implements vscode.DocumentSemanticTokensProvider {
                 // category declarations but not definitions
                 const startIndex = origLine.indexOf('categories:');
 
-                for (const catName of this.groupNames.categoryNames) {
+                for (const [catName, _] of this.groupNames.categoryNames) {
                     const catNameIndex = trimmedLine.indexOf(catName, 11);
                     if (catNameIndex !== -1) {
-                        retVal.push(
-                            new Token(i, catNameIndex + startIndex, catName.length, categoryType, ['declaration'])
+                        this.allTokens.push(
+                            new Token(i, catNameIndex + startIndex, catName, categoryType, ['declaration'])
                         );
                     }
                 }
             } else if (trimmedLine.startsWith('words:')) {
                 // word shape definitions, may reference classes and macros
-                retVal.push(...this.tokensForWordShape(origLine, i, origLine.indexOf(':')));
+                this.allTokens.push(...this.tokensForWordShape(document, i, origLine.indexOf(':')));
             }
         }
-
-        return retVal;
     }
 
-    private tokensForWordShape(line: string, lineNumber: number, startIndex: number): Token[] {
+    private tokensForWordShape(document: vscode.TextDocument, lineNumber: number, startIndex: number): Token[] {
         // remove the possibility of misparsing a comment
-        line = line.split('#')[0];
+        const uri = document.uri;
+
+        const line = document.getText().split('\n')[lineNumber].split('#')[0];
         
         const retVal: Token[] = [];
 
         for (let j = startIndex; j < line.length; ++j) {
             // look for class and macro references
-            if (this.groupNames.classNames.has(line[j])) {
+            if (this.groupNames.classNames.get(line[j])) {
                 retVal.push(
-                    new Token(lineNumber, j, 1, phonemeClassType, [])
+                    new Token(lineNumber, j, line[j], phonemeClassType, [])
                 );
             } else if (line[j] === '$') {
                 // check if it matches any known macros
                 const lineStartingAtMacroReference = line.substring(j);
-                for (const macroName of this.groupNames.macroNames) {
+                for (const [macroName, _] of this.groupNames.macroNames) {
                     if (lineStartingAtMacroReference.startsWith(macroName)) {
                         // success!
                         retVal.push(
-                            new Token(lineNumber, j, macroName.length, macroType, [])
+                            new Token(lineNumber, j, macroName, macroType, [])
                         );
                         // skip forward so we don't accidentally overlap this with a class name
                         j += macroName.length - 1;
@@ -197,6 +253,9 @@ class Provider implements vscode.DocumentSemanticTokensProvider {
 const provider = new Provider();
 
 vscode.languages.registerDocumentSemanticTokensProvider({
-    language: 'def',
-    scheme: 'file'
+    language: 'def'
 }, provider, legend);
+
+vscode.languages.registerDefinitionProvider({
+    language: 'def'
+}, provider);
