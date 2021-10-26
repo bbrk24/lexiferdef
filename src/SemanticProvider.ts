@@ -36,7 +36,9 @@ class Token {
 }
 
 /** This class provides document-aware features, such as semantic highlighting and definition location. */
-export class SemanticProvider implements vscode.DocumentSemanticTokensProvider, vscode.DefinitionProvider {
+export class SemanticProvider
+    implements vscode.DocumentSemanticTokensProvider, vscode.DefinitionProvider, vscode.ReferenceProvider, vscode.RenameProvider
+{
     private groupNames: GroupNames = new GroupNames();
     private allTokens: Token[] = [];
 
@@ -59,14 +61,7 @@ export class SemanticProvider implements vscode.DocumentSemanticTokensProvider, 
         token: vscode.CancellationToken
     ) {
         // find the token
-        let containingToken: Token | undefined;
-
-        for (const token of this.allTokens) {
-            if (token.range.contains(position)) {
-                containingToken = token;
-                break;
-            }
-        }
+        let containingToken = this.findContainingToken(position);
 
         if (!containingToken) {
             return undefined;
@@ -92,6 +87,74 @@ export class SemanticProvider implements vscode.DocumentSemanticTokensProvider, 
         }
 
         return new vscode.Location(document.uri, resultRange);
+    }
+
+    provideReferences(
+        document: vscode.TextDocument,
+        position: vscode.Position,
+        context: vscode.ReferenceContext,
+        token: vscode.CancellationToken
+    ) {
+        // find the token that contains it
+        let containingToken = this.findContainingToken(position);
+
+        if (!containingToken) {
+            return [];
+        }
+
+        // filter only the tokens with the same text, and map them to positions
+
+        return this.allTokens.filter(el => el.text === containingToken!.text)
+            .map(el => new vscode.Location(document.uri, el.range));
+    }
+
+    provideRenameEdits(
+        document: vscode.TextDocument,
+        position: vscode.Position,
+        newName: string,
+        token: vscode.CancellationToken
+    ) {
+        // first, see if there's even a change to be made
+        const containingToken = this.findContainingToken(position);
+        if (!containingToken) {
+            return undefined;
+        }
+
+        return new Promise<vscode.WorkspaceEdit>((resolve, reject) => {
+            // I'm not using the CancellationToken because there's practically no documentation on how to do so.
+
+            // if the new name is not legal, reject the promise
+            switch (containingToken.type) {
+            case macroType:
+                if (newName[0] !== '$') {
+                    reject('Invalid macro name.');
+                    return;
+                }
+                break;
+            case phonemeClassType:
+                if (newName.length !== 1) {
+                    reject('Invalid phoneme class name.');
+                    return;
+                }
+                break;
+            case categoryType:
+                if (newName.length <= 1) {
+                    reject('Invalid category name.');
+                    return;
+                }
+            }
+
+            // All seems to be good
+            const edits = new vscode.WorkspaceEdit();
+            this.allTokens.filter(el => el.text === containingToken.text)
+                .forEach(el => edits.replace(document.uri, el.range, newName));
+            
+            resolve(edits);
+        });
+    }
+
+    private findContainingToken(position: vscode.Position): Token | undefined {
+        return this.allTokens.find(el => el.range.contains(position));
     }
 
     private getGroups(document: vscode.TextDocument) {

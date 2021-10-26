@@ -30,7 +30,8 @@
       "}"
     ]
   ],
-  "wordPattern": "([^#$'-,.:-?A-^{-}\\s]|\\$[1-9A-Z])+|[A-Z]|\\\\[1-9]|#{2,}|[+%]",
+  // This pattern would be improved by semantic matching, but I'm not sure that's possible.
+  "wordPattern": "[^#$'-,.:-?A-^{-}\\s]+|\\$.|[A-Z]|\\\\[1-9]|#{2,}|[+%]",
   "folding": {
     "offSide": false
   },

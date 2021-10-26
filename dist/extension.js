@@ -8,4 +8,6 @@ const semanticProvider = new SemanticProvider_1.SemanticProvider();
 const foldingProvider = new FoldingProvider_1.default();
 vscode.languages.registerDocumentSemanticTokensProvider(selector, semanticProvider, SemanticProvider_1.legend);
 vscode.languages.registerDefinitionProvider(selector, semanticProvider);
+vscode.languages.registerReferenceProvider(selector, semanticProvider);
+vscode.languages.registerRenameProvider(selector, semanticProvider);
 vscode.languages.registerFoldingRangeProvider(selector, foldingProvider);

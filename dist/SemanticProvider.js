@@ -39,13 +39,7 @@ class SemanticProvider {
     provideDefinition(document, position, token) {
         var _a, _b, _c;
         // find the token
-        let containingToken;
-        for (const token of this.allTokens) {
-            if (token.range.contains(position)) {
-                containingToken = token;
-                break;
-            }
-        }
+        let containingToken = this.findContainingToken(position);
         if (!containingToken) {
             return undefined;
         }
@@ -67,6 +61,55 @@ class SemanticProvider {
             return undefined;
         }
         return new vscode.Location(document.uri, resultRange);
+    }
+    provideReferences(document, position, context, token) {
+        // find the token that contains it
+        let containingToken = this.findContainingToken(position);
+        if (!containingToken) {
+            return [];
+        }
+        // filter only the tokens with the same text, and map them to positions
+        return this.allTokens.filter(el => el.text === containingToken.text)
+            .map(el => new vscode.Location(document.uri, el.range));
+    }
+    provideRenameEdits(document, position, newName, token) {
+        // first, see if there's even a change to be made
+        const containingToken = this.findContainingToken(position);
+        if (!containingToken) {
+            return undefined;
+        }
+        return new Promise((resolve, reject) => {
+            // I'm not using the CancellationToken because there's practically no documentation on how to do so.
+            // if the new name is not legal, return a rejected promise
+            switch (containingToken.type) {
+                case macroType:
+                    if (newName[0] !== '$') {
+                        reject('Invalid macro name.');
+                        return;
+                    }
+                    break;
+                case phonemeClassType:
+                    if (newName.length !== 1) {
+                        reject('Invalid phoneme class name.');
+                        return;
+                    }
+                    break;
+                case categoryType:
+                    if (newName.length <= 1) {
+                        reject('Invalid category name.');
+                        return;
+                    }
+            }
+            // All seems to be good
+            const edits = new vscode.WorkspaceEdit();
+            this.allTokens.filter(el => el.text === containingToken.text)
+                .forEach(el => edits.replace(document.uri, el.range, newName));
+            
+            resolve(edits);
+        });
+    }
+    findContainingToken(position) {
+        return this.allTokens.find(el => el.range.contains(position));
     }
     getGroups(document) {
         const lines = document.getText().split('\n');
