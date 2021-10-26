@@ -1,8 +1,6 @@
 import * as vscode from 'vscode';
 
 export default class FoldingProvider implements vscode.FoldingRangeProvider {
-    onDidChangeFoldingRanges?: vscode.Event<void> | undefined;
-
     provideFoldingRanges(
         document: vscode.TextDocument,
         context: vscode.FoldingContext,
@@ -26,33 +24,31 @@ export default class FoldingProvider implements vscode.FoldingRangeProvider {
                 if (line[0] !== '#') {
                     currentlyInHeading = false;
                 }
-            } else {
-                if (line.match(/##+/u)) {
-                    currentlyInHeading = true;
+            } else if (line.match(/##+/u)) {
+                currentlyInHeading = true;
 
-                    if (sectionStartLine !== undefined) {
-                        // end the previous section before starting a new one
-                        retVal.push(new vscode.FoldingRange(
-                            sectionStartLine,
-                            i - 1,
-                            vscode.FoldingRangeKind.Region
-                        ));
-                    }
-
-                    // add 1 to i so that we can still see the heading text
-                    sectionStartLine = i + 1;
-                } else if (line[0] === '#' && commentStartLine === undefined) {
-                    // we found the start of a comment block
-                    commentStartLine = i;
-                } else if (commentStartLine !== undefined && line[0] !== '#') {
-                    // we found the end of a comment block
+                if (sectionStartLine !== undefined) {
+                    // end the previous section before starting a new one
                     retVal.push(new vscode.FoldingRange(
-                        commentStartLine,
+                        sectionStartLine,
                         i - 1,
-                        vscode.FoldingRangeKind.Comment
+                        vscode.FoldingRangeKind.Region
                     ));
-                    commentStartLine = undefined;
                 }
+
+                // add 1 to i so that we can still see the heading text
+                sectionStartLine = i + 1;
+            } else if (line[0] === '#' && commentStartLine === undefined) {
+                // we found the start of a comment block
+                commentStartLine = i;
+            } else if (commentStartLine !== undefined && line[0] !== '#') {
+                // we found the end of a comment block
+                retVal.push(new vscode.FoldingRange(
+                    commentStartLine,
+                    i - 1,
+                    vscode.FoldingRangeKind.Comment
+                ));
+                commentStartLine = undefined;
             }
         }
 
@@ -77,4 +73,4 @@ export default class FoldingProvider implements vscode.FoldingRangeProvider {
 
         return retVal;
     }
-};
+}

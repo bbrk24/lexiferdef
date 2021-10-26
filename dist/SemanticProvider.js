@@ -2,12 +2,14 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.SemanticProvider = exports.legend = void 0;
 const vscode = require("vscode");
-const phonemeClassType = 'class';
-const macroType = 'macro';
-const categoryType = 'enumMember';
-const tokenTypes = [phonemeClassType, macroType, categoryType];
+var Type;
+(function (Type) {
+    Type["phonemeClassType"] = "class";
+    Type["macroType"] = "macro";
+    Type["categoryType"] = "enumMember";
+})(Type || (Type = {}));
 const tokenModifiers = ['declaration', 'definition', 'readonly'];
-exports.legend = new vscode.SemanticTokensLegend(tokenTypes, tokenModifiers);
+exports.legend = new vscode.SemanticTokensLegend(Object.values(Type), tokenModifiers);
 class GroupNames {
     constructor() {
         this.classNames = new Map();
@@ -23,7 +25,10 @@ class Token {
         this.range = new vscode.Range(new vscode.Position(lineNumber, firstChar), new vscode.Position(lineNumber, firstChar + text.length));
     }
 }
-/** This class provides document-aware features, such as semantic highlighting and definition location. */
+/**
+ * This class provides document-aware features, such as semantic highlighting and definition
+ * location.
+ */
 class SemanticProvider {
     constructor() {
         this.groupNames = new GroupNames();
@@ -46,13 +51,13 @@ class SemanticProvider {
         // okay, we know what token it belongs to, now find its corresponding definition
         let resultRange;
         switch (containingToken.type) {
-            case categoryType:
+            case Type.categoryType:
                 resultRange = (_a = this.groupNames.categoryNames.get(containingToken.text)) === null || _a === void 0 ? void 0 : _a.range;
                 break;
-            case macroType:
+            case Type.macroType:
                 resultRange = (_b = this.groupNames.macroNames.get(containingToken.text)) === null || _b === void 0 ? void 0 : _b.range;
                 break;
-            case phonemeClassType:
+            case Type.phonemeClassType:
                 resultRange = (_c = this.groupNames.classNames.get(containingToken.text)) === null || _c === void 0 ? void 0 : _c.range;
                 break;
         }
@@ -77,9 +82,7 @@ class SemanticProvider {
         if (containingToken) {
             return containingToken.range;
         }
-        else {
-            throw new Error('Can only rename macros, classes, and categories.');
-        }
+        throw new Error('Can only rename macros, classes, and categories.');
     }
     provideRenameEdits(document, position, newName, token) {
         // first, see if there's even a change to be made
@@ -88,22 +91,23 @@ class SemanticProvider {
             return undefined;
         }
         return new Promise((resolve, reject) => {
-            // I'm not using the CancellationToken because there's practically no documentation on how to do so.
+            // I'm not using the CancellationToken because there's practically no documentation on
+            // how to do so.
             // if the new name is not legal, reject the promise
             switch (containingToken.type) {
-                case macroType:
+                case Type.macroType:
                     if (newName[0] !== '$') {
                         reject('Invalid macro name.');
                         return;
                     }
                     break;
-                case phonemeClassType:
+                case Type.phonemeClassType:
                     if (newName.length !== 1) {
                         reject('Invalid phoneme class name.');
                         return;
                     }
                     break;
-                case categoryType:
+                case Type.categoryType:
                     if (newName.length <= 1) {
                         reject('Invalid category name.');
                         return;
@@ -124,14 +128,14 @@ class SemanticProvider {
         }
         let resultRange;
         switch (containingToken.type) {
-            case categoryType:
+            case Type.categoryType:
                 // this is a bit harder
                 resultRange = (_a = this.allTokens.find(el => el.text === containingToken.text && el.modifiers.includes('declaration'))) === null || _a === void 0 ? void 0 : _a.range;
                 break;
-            case macroType:
+            case Type.macroType:
                 resultRange = (_b = this.groupNames.macroNames.get(containingToken.text)) === null || _b === void 0 ? void 0 : _b.range;
                 break;
-            case phonemeClassType:
+            case Type.phonemeClassType:
                 resultRange = (_c = this.groupNames.classNames.get(containingToken.text)) === null || _c === void 0 ? void 0 : _c.range;
                 break;
         }
@@ -154,7 +158,7 @@ class SemanticProvider {
             const trimmedLine = origLine.trim();
             if (trimmedLine.startsWith('categories:')) {
                 // parse out category names
-                let cats = trimmedLine.substring(11).split(/\s+/gu);
+                const cats = trimmedLine.substring(11).split(/\s+/gu);
                 // remove any weights provided and add them to the set
                 cats.forEach(el => declaredCategories.add(el.split(':')[0]));
             }
@@ -178,7 +182,6 @@ class SemanticProvider {
         }
     }
     findRanges(document) {
-        const uri = document.uri;
         const lines = document.getText().split('\n');
         this.allTokens = [];
         for (let i = 0; i < lines.length; ++i) {
@@ -201,10 +204,10 @@ class SemanticProvider {
                             break;
                         }
                     }
-                    this.allTokens.push(new Token(i, startIndex, currMacro, macroType, ['declaration', 'definition', 'readonly']));
+                    this.allTokens.push(new Token(i, startIndex, currMacro, Type.macroType, ['declaration', 'definition', 'readonly']));
                     for (let j = trimmedLine.indexOf('=') + 1; j < trimmedLine.length; ++j) {
                         if (this.groupNames.classNames.get(trimmedLine[j])) {
-                            this.allTokens.push(new Token(i, startIndex + j, trimmedLine[j], phonemeClassType, []));
+                            this.allTokens.push(new Token(i, startIndex + j, trimmedLine[j], Type.phonemeClassType, ['readonly']));
                         }
                     }
                 }
@@ -213,11 +216,12 @@ class SemanticProvider {
                     const itemName = trimmedLine.split(/\s|=/u)[0];
                     if (itemName.length === 1) {
                         // it's a class name
-                        this.allTokens.push(new Token(i, origLine.indexOf(itemName), itemName, phonemeClassType, ['declaration', 'definition', 'readonly']));
+                        this.allTokens.push(new Token(i, origLine.indexOf(itemName), itemName, Type.phonemeClassType, ['declaration', 'definition', 'readonly']));
                     }
                     else if (this.groupNames.categoryNames.get(itemName)) {
-                        // add one token for the category name, and then parse out any others it may reference
-                        this.allTokens.push(new Token(i, origLine.indexOf(itemName), itemName, categoryType, ['definition']), ...this.tokensForWordShape(document, i, origLine.indexOf('=')));
+                        // add one token for the category name, and then parse out any others it
+                        // may reference
+                        this.allTokens.push(new Token(i, origLine.indexOf(itemName), itemName, Type.categoryType, ['definition']), ...this.tokensForWordShape(document, i, origLine.indexOf('=')));
                     }
                     // else, it's not recognized, just ignore it
                 }
@@ -228,7 +232,7 @@ class SemanticProvider {
                 for (const [catName, _] of this.groupNames.categoryNames) {
                     const catNameIndex = trimmedLine.indexOf(catName, 11);
                     if (catNameIndex !== -1) {
-                        this.allTokens.push(new Token(i, catNameIndex + startIndex, catName, categoryType, ['declaration']));
+                        this.allTokens.push(new Token(i, catNameIndex + startIndex, catName, Type.categoryType, ['declaration']));
                     }
                 }
             }
@@ -239,14 +243,12 @@ class SemanticProvider {
         }
     }
     tokensForWordShape(document, lineNumber, startIndex) {
-        // remove the possibility of misparsing a comment
-        const uri = document.uri;
         const line = document.getText().split('\n')[lineNumber].split('#')[0];
         const retVal = [];
         for (let j = startIndex; j < line.length; ++j) {
             // look for class and macro references
             if (this.groupNames.classNames.get(line[j])) {
-                retVal.push(new Token(lineNumber, j, line[j], phonemeClassType, []));
+                retVal.push(new Token(lineNumber, j, line[j], Type.phonemeClassType, []));
             }
             else if (line[j] === '$') {
                 // check if it matches any known macros
@@ -254,7 +256,7 @@ class SemanticProvider {
                 for (const [macroName, _] of this.groupNames.macroNames) {
                     if (lineStartingAtMacroReference.startsWith(macroName)) {
                         // success!
-                        retVal.push(new Token(lineNumber, j, macroName, macroType, []));
+                        retVal.push(new Token(lineNumber, j, macroName, Type.macroType, []));
                         // skip forward so we don't accidentally overlap this with a class name
                         j += macroName.length - 1;
                         break;
@@ -266,4 +268,3 @@ class SemanticProvider {
     }
 }
 exports.SemanticProvider = SemanticProvider;
-;

@@ -8,7 +8,8 @@ actions for Lexifer definition files.
 
 ## Known Issues
 
-`\{` followed by a number colors the number as if the backslash were not there.
+`\{` followed by a number only colors the number, and not any letters or
+symbols, until the next `}` is reached.
 
 ## Release Notes
 

@@ -29,7 +29,7 @@
     },
     {
       "name": "constant.numeric.def",
-      "match": "(?<=:)\\s*[0-9.]+|(?<={(\\d|,)*)\\d"
+      "match": "(?<=:)\\s*[0-9.]+|(?<=[^\\\\]\\{(\\d|,)*)\\d"
     },
     {
       "name": "invalid.illegal.def",

@@ -1,6 +1,6 @@
 {
   "name": "lexiferdef",
-  "version": "0.1.15",
+  "version": "0.1.16",
   "engines": {
     "vscode": "^1.58.0"
   },
@@ -38,6 +38,9 @@
   "devDependencies": {
     "@types/node": "14.17.0",
     "@types/vscode": "^1.58.0",
+    "@typescript-eslint/eslint-plugin": "^5.0.0",
+    "@typescript-eslint/parser": "^5.0.0",
+    "eslint": "^8.0.0",
     "typescript": "^4.1.5"
   },
   "main": "dist/extension.js",
@@ -45,6 +48,6 @@
     "onLanguage:def"
   ],
   "scripts": {
-    "vscode:prepublish": "tsc"
+    "vscode:prepublish": "node_modules/.bin/eslint src/*.ts && tsc"
   }
 }

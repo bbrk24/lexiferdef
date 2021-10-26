@@ -1,16 +1,16 @@
 import * as vscode from 'vscode';
 
-const phonemeClassType = 'class';
-const macroType = 'macro';
-const categoryType = 'enumMember';
+enum Type {
+    phonemeClassType = 'class',
+    macroType = 'macro',
+    categoryType = 'enumMember'
+}
 
-type Type = typeof phonemeClassType | typeof macroType | typeof categoryType;
 type Modifier = 'declaration' | 'definition' | 'readonly';
 
-const tokenTypes: Type[] = [phonemeClassType, macroType, categoryType];
 const tokenModifiers: Modifier[] = ['declaration', 'definition', 'readonly'];
 
-export const legend = new vscode.SemanticTokensLegend(tokenTypes, tokenModifiers);
+export const legend = new vscode.SemanticTokensLegend(Object.values(Type), tokenModifiers);
 
 class GroupNames {
     classNames = new Map<string, vscode.Location>();
@@ -35,11 +35,13 @@ class Token {
     }
 }
 
-/** This class provides document-aware features, such as semantic highlighting and definition location. */
+/**
+ * This class provides document-aware features, such as semantic highlighting and definition
+ * location.
+ */
 export class SemanticProvider
-    implements vscode.DocumentSemanticTokensProvider, vscode.DefinitionProvider, vscode.ReferenceProvider, vscode.RenameProvider,
-    vscode.DeclarationProvider
-{
+implements vscode.DocumentSemanticTokensProvider, vscode.DefinitionProvider,
+    vscode.ReferenceProvider, vscode.RenameProvider, vscode.DeclarationProvider {
     private groupNames: GroupNames = new GroupNames();
     private allTokens: Token[] = [];
 
@@ -50,8 +52,7 @@ export class SemanticProvider
         this.findRanges(document);
 
         this.allTokens.forEach(el =>
-            tokenBuilder.push(el.range, el.type, el.modifiers)
-        );
+            tokenBuilder.push(el.range, el.type, el.modifiers));
 
         return tokenBuilder.build();
     }
@@ -71,15 +72,18 @@ export class SemanticProvider
         // okay, we know what token it belongs to, now find its corresponding definition
         let resultRange: vscode.Range | undefined;
         switch (containingToken.type) {
-            case categoryType:
-                resultRange = this.groupNames.categoryNames.get(containingToken.text)?.range;
-                break;
-            case macroType:
-                resultRange = this.groupNames.macroNames.get(containingToken.text)?.range;
-                break;
-            case phonemeClassType:
-                resultRange = this.groupNames.classNames.get(containingToken.text)?.range;
-                break;
+        case Type.categoryType:
+            resultRange = this.groupNames.categoryNames.get(containingToken.text)?.range;
+
+            break;
+        case Type.macroType:
+            resultRange = this.groupNames.macroNames.get(containingToken.text)?.range;
+
+            break;
+        case Type.phonemeClassType:
+            resultRange = this.groupNames.classNames.get(containingToken.text)?.range;
+
+            break;
         }
 
         // this shouldn't happen but just in case
@@ -109,13 +113,17 @@ export class SemanticProvider
             .map(el => new vscode.Location(document.uri, el.range));
     }
 
-    prepareRename(document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken) {
+    prepareRename(
+        document: vscode.TextDocument,
+        position: vscode.Position,
+        token: vscode.CancellationToken
+    ) {
         const containingToken = this.findContainingToken(position);
         if (containingToken) {
             return containingToken.range;
-        } else {
-            throw new Error('Can only rename macros, classes, and categories.');
         }
+
+        throw new Error('Can only rename macros, classes, and categories.');
     }
 
     provideRenameEdits(
@@ -131,25 +139,31 @@ export class SemanticProvider
         }
 
         return new Promise<vscode.WorkspaceEdit>((resolve, reject) => {
-            // I'm not using the CancellationToken because there's practically no documentation on how to do so.
+            // I'm not using the CancellationToken because there's practically no documentation on
+            // how to do so.
 
             // if the new name is not legal, reject the promise
             switch (containingToken.type) {
-            case macroType:
+            case Type.macroType:
                 if (newName[0] !== '$') {
                     reject('Invalid macro name.');
+
                     return;
                 }
+
                 break;
-            case phonemeClassType:
+            case Type.phonemeClassType:
                 if (newName.length !== 1) {
                     reject('Invalid phoneme class name.');
+
                     return;
                 }
+
                 break;
-            case categoryType:
+            case Type.categoryType:
                 if (newName.length <= 1) {
                     reject('Invalid category name.');
+
                     return;
                 }
             }
@@ -158,7 +172,7 @@ export class SemanticProvider
             const edits = new vscode.WorkspaceEdit();
             this.allTokens.filter(el => el.text === containingToken.text)
                 .forEach(el => edits.replace(document.uri, el.range, newName));
-            
+
             resolve(edits);
         });
     }
@@ -167,7 +181,7 @@ export class SemanticProvider
         document: vscode.TextDocument,
         position: vscode.Position,
         token: vscode.CancellationToken
-    ): vscode.ProviderResult<vscode.Declaration> {
+    ) {
         const containingToken = this.findContainingToken(position);
         if (!containingToken) {
             return undefined;
@@ -175,17 +189,19 @@ export class SemanticProvider
 
         let resultRange: vscode.Range | undefined;
         switch (containingToken.type) {
-        case categoryType:
+        case Type.categoryType:
             // this is a bit harder
             resultRange = this.allTokens.find(el =>
-                el.text === containingToken.text && el.modifiers.includes('declaration')
-            )?.range;
+                el.text === containingToken.text && el.modifiers.includes('declaration'))?.range;
+
             break;
-        case macroType:
+        case Type.macroType:
             resultRange = this.groupNames.macroNames.get(containingToken.text)?.range;
+
             break;
-        case phonemeClassType:
+        case Type.phonemeClassType:
             resultRange = this.groupNames.classNames.get(containingToken.text)?.range;
+
             break;
         }
 
@@ -197,7 +213,7 @@ export class SemanticProvider
         return new vscode.Location(document.uri, resultRange);
     }
 
-    private findContainingToken(position: vscode.Position): Token | undefined {
+    private findContainingToken(position: vscode.Position) {
         return this.allTokens.find(el => el.range.contains(position));
     }
 
@@ -214,11 +230,10 @@ export class SemanticProvider
 
             if (trimmedLine.startsWith('categories:')) {
                 // parse out category names
-                let cats = trimmedLine.substring(11).split(/\s+/gu);
+                const cats = trimmedLine.substring(11).split(/\s+/gu);
                 // remove any weights provided and add them to the set
                 cats.forEach(el =>
-                    declaredCategories.add(el.split(':')[0])
-                );
+                    declaredCategories.add(el.split(':')[0]));
             } else if (trimmedLine.includes('=')) {
                 // determine whether it's a class or a macro
                 const name = trimmedLine.split('=')[0].trimEnd();
@@ -226,19 +241,28 @@ export class SemanticProvider
                     // it's a macro
                     this.groupNames.macroNames.set(
                         name,
-                        new vscode.Location(document.uri, new vscode.Position(i, origLine.indexOf('$')))
+                        new vscode.Location(
+                            document.uri,
+                            new vscode.Position(i, origLine.indexOf('$'))
+                        )
                     );
                 } else if (name.length === 1) {
                     // it's a class
                     this.groupNames.classNames.set(
                         name,
-                        new vscode.Location(document.uri, new vscode.Position(i, origLine.indexOf(name)))
+                        new vscode.Location(
+                            document.uri,
+                            new vscode.Position(i, origLine.indexOf(name))
+                        )
                     );
                 } else if (declaredCategories.has(name)) {
                     // it's a category. it already exists, but the location wasn't known
                     this.groupNames.categoryNames.set(
                         name,
-                        new vscode.Location(document.uri, new vscode.Position(i, origLine.indexOf(name)))
+                        new vscode.Location(
+                            document.uri,
+                            new vscode.Position(i, origLine.indexOf(name))
+                        )
                     );
                 }
                 // otherwise it's a mistake
@@ -247,7 +271,6 @@ export class SemanticProvider
     }
 
     private findRanges(document: vscode.TextDocument) {
-        const uri = document.uri;
         const lines = document.getText().split('\n');
         this.allTokens = [];
 
@@ -270,22 +293,32 @@ export class SemanticProvider
 
                     // figure out which macro it is
                     let currMacro = '';
+
                     for (const [macroName, _] of this.groupNames.macroNames) {
                         if (trimmedLine.startsWith(macroName)) {
                             currMacro = macroName;
+
                             break;
                         }
                     }
 
-                    this.allTokens.push(
-                        new Token(i, startIndex, currMacro, macroType, ['declaration', 'definition', 'readonly'])
-                    );
+                    this.allTokens.push(new Token(
+                        i,
+                        startIndex,
+                        currMacro,
+                        Type.macroType,
+                        ['declaration', 'definition', 'readonly']
+                    ));
 
                     for (let j = trimmedLine.indexOf('=') + 1; j < trimmedLine.length; ++j) {
                         if (this.groupNames.classNames.get(trimmedLine[j])) {
-                            this.allTokens.push(
-                                new Token(i, startIndex + j, trimmedLine[j], phonemeClassType, [])
-                            );
+                            this.allTokens.push(new Token(
+                                i,
+                                startIndex + j,
+                                trimmedLine[j],
+                                Type.phonemeClassType,
+                                ['readonly']
+                            ));
                         }
                     }
                 } else {
@@ -297,13 +330,20 @@ export class SemanticProvider
                             i,
                             origLine.indexOf(itemName),
                             itemName,
-                            phonemeClassType,
+                            Type.phonemeClassType,
                             ['declaration', 'definition', 'readonly']
                         ));
                     } else if (this.groupNames.categoryNames.get(itemName)) {
-                        // add one token for the category name, and then parse out any others it may reference
+                        // add one token for the category name, and then parse out any others it
+                        // may reference
                         this.allTokens.push(
-                            new Token(i, origLine.indexOf(itemName), itemName, categoryType, ['definition']),
+                            new Token(
+                                i,
+                                origLine.indexOf(itemName),
+                                itemName,
+                                Type.categoryType,
+                                ['definition']
+                            ),
                             ...this.tokensForWordShape(document, i, origLine.indexOf('='))
                         );
                     }
@@ -316,9 +356,13 @@ export class SemanticProvider
                 for (const [catName, _] of this.groupNames.categoryNames) {
                     const catNameIndex = trimmedLine.indexOf(catName, 11);
                     if (catNameIndex !== -1) {
-                        this.allTokens.push(
-                            new Token(i, catNameIndex + startIndex, catName, categoryType, ['declaration'])
-                        );
+                        this.allTokens.push(new Token(
+                            i,
+                            catNameIndex + startIndex,
+                            catName,
+                            Type.categoryType,
+                            ['declaration']
+                        ));
                     }
                 }
             } else if (trimmedLine.startsWith('words:')) {
@@ -328,10 +372,11 @@ export class SemanticProvider
         }
     }
 
-    private tokensForWordShape(document: vscode.TextDocument, lineNumber: number, startIndex: number): Token[] {
-        // remove the possibility of misparsing a comment
-        const uri = document.uri;
-
+    private tokensForWordShape(
+        document: vscode.TextDocument,
+        lineNumber: number,
+        startIndex: number
+    ) {
         const line = document.getText().split('\n')[lineNumber].split('#')[0];
 
         const retVal: Token[] = [];
@@ -340,19 +385,21 @@ export class SemanticProvider
             // look for class and macro references
             if (this.groupNames.classNames.get(line[j])) {
                 retVal.push(
-                    new Token(lineNumber, j, line[j], phonemeClassType, [])
+                    new Token(lineNumber, j, line[j], Type.phonemeClassType, [])
                 );
             } else if (line[j] === '$') {
                 // check if it matches any known macros
                 const lineStartingAtMacroReference = line.substring(j);
+
                 for (const [macroName, _] of this.groupNames.macroNames) {
                     if (lineStartingAtMacroReference.startsWith(macroName)) {
                         // success!
                         retVal.push(
-                            new Token(lineNumber, j, macroName, macroType, [])
+                            new Token(lineNumber, j, macroName, Type.macroType, [])
                         );
                         // skip forward so we don't accidentally overlap this with a class name
                         j += macroName.length - 1;
+
                         break;
                     }
                 }
@@ -361,4 +408,4 @@ export class SemanticProvider
 
         return retVal;
     }
-};
+}
