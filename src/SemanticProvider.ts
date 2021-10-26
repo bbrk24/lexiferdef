@@ -5,10 +5,10 @@ const macroType = 'macro';
 const categoryType = 'enumMember';
 
 type Type = typeof phonemeClassType | typeof macroType | typeof categoryType;
-type Modifier = 'declaration' | 'definition';
+type Modifier = 'declaration' | 'definition' | 'readonly';
 
 const tokenTypes: Type[] = [phonemeClassType, macroType, categoryType];
-const tokenModifiers: Modifier[] = ['declaration', 'definition'];
+const tokenModifiers: Modifier[] = ['declaration', 'definition', 'readonly'];
 
 export const legend = new vscode.SemanticTokensLegend(tokenTypes, tokenModifiers);
 
@@ -37,12 +37,13 @@ class Token {
 
 /** This class provides document-aware features, such as semantic highlighting and definition location. */
 export class SemanticProvider
-    implements vscode.DocumentSemanticTokensProvider, vscode.DefinitionProvider, vscode.ReferenceProvider, vscode.RenameProvider
+    implements vscode.DocumentSemanticTokensProvider, vscode.DefinitionProvider, vscode.ReferenceProvider, vscode.RenameProvider,
+    vscode.DeclarationProvider
 {
     private groupNames: GroupNames = new GroupNames();
     private allTokens: Token[] = [];
 
-    provideDocumentSemanticTokens(document: vscode.TextDocument) {
+    provideDocumentSemanticTokens(document: vscode.TextDocument, token: vscode.CancellationToken) {
         const tokenBuilder = new vscode.SemanticTokensBuilder(legend);
 
         this.getGroups(document);
@@ -61,7 +62,7 @@ export class SemanticProvider
         token: vscode.CancellationToken
     ) {
         // find the token
-        let containingToken = this.findContainingToken(position);
+        const containingToken = this.findContainingToken(position);
 
         if (!containingToken) {
             return undefined;
@@ -96,7 +97,7 @@ export class SemanticProvider
         token: vscode.CancellationToken
     ) {
         // find the token that contains it
-        let containingToken = this.findContainingToken(position);
+        const containingToken = this.findContainingToken(position);
 
         if (!containingToken) {
             return [];
@@ -106,6 +107,15 @@ export class SemanticProvider
 
         return this.allTokens.filter(el => el.text === containingToken!.text)
             .map(el => new vscode.Location(document.uri, el.range));
+    }
+
+    prepareRename(document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken) {
+        const containingToken = this.findContainingToken(position);
+        if (containingToken) {
+            return containingToken.range;
+        } else {
+            throw new Error('Can only rename macros, classes, and categories.');
+        }
     }
 
     provideRenameEdits(
@@ -151,6 +161,40 @@ export class SemanticProvider
             
             resolve(edits);
         });
+    }
+
+    provideDeclaration(
+        document: vscode.TextDocument,
+        position: vscode.Position,
+        token: vscode.CancellationToken
+    ): vscode.ProviderResult<vscode.Declaration> {
+        const containingToken = this.findContainingToken(position);
+        if (!containingToken) {
+            return undefined;
+        }
+
+        let resultRange: vscode.Range | undefined;
+        switch (containingToken.type) {
+        case categoryType:
+            // this is a bit harder
+            resultRange = this.allTokens.find(el =>
+                el.text === containingToken.text && el.modifiers.includes('declaration')
+            )?.range;
+            break;
+        case macroType:
+            resultRange = this.groupNames.macroNames.get(containingToken.text)?.range;
+            break;
+        case phonemeClassType:
+            resultRange = this.groupNames.classNames.get(containingToken.text)?.range;
+            break;
+        }
+
+        // this shouldn't happen but just in case
+        if (!resultRange) {
+            return undefined;
+        }
+
+        return new vscode.Location(document.uri, resultRange);
     }
 
     private findContainingToken(position: vscode.Position): Token | undefined {
@@ -234,7 +278,7 @@ export class SemanticProvider
                     }
 
                     this.allTokens.push(
-                        new Token(i, startIndex, currMacro, macroType, ['declaration', 'definition'])
+                        new Token(i, startIndex, currMacro, macroType, ['declaration', 'definition', 'readonly'])
                     );
 
                     for (let j = trimmedLine.indexOf('=') + 1; j < trimmedLine.length; ++j) {
@@ -249,9 +293,13 @@ export class SemanticProvider
                     const itemName = trimmedLine.split(/\s|=/u)[0];
                     if (itemName.length === 1) {
                         // it's a class name
-                        this.allTokens.push(
-                            new Token(i, origLine.indexOf(itemName), itemName, phonemeClassType, ['declaration', 'definition'])
-                        );
+                        this.allTokens.push(new Token(
+                            i,
+                            origLine.indexOf(itemName),
+                            itemName,
+                            phonemeClassType,
+                            ['declaration', 'definition', 'readonly']
+                        ));
                     } else if (this.groupNames.categoryNames.get(itemName)) {
                         // add one token for the category name, and then parse out any others it may reference
                         this.allTokens.push(

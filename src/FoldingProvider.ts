@@ -39,11 +39,12 @@ export default class FoldingProvider implements vscode.FoldingRangeProvider {
                         ));
                     }
 
-                    sectionStartLine = i;
+                    // add 1 to i so that we can still see the heading text
+                    sectionStartLine = i + 1;
                 } else if (line[0] === '#' && commentStartLine === undefined) {
                     // we found the start of a comment block
                     commentStartLine = i;
-                } else if (line[0] !== '#' && commentStartLine !== undefined) {
+                } else if (commentStartLine !== undefined && line[0] !== '#') {
                     // we found the end of a comment block
                     retVal.push(new vscode.FoldingRange(
                         commentStartLine,

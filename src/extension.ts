@@ -10,5 +10,6 @@ vscode.languages.registerDocumentSemanticTokensProvider(selector, semanticProvid
 vscode.languages.registerDefinitionProvider(selector, semanticProvider);
 vscode.languages.registerReferenceProvider(selector, semanticProvider);
 vscode.languages.registerRenameProvider(selector, semanticProvider);
+vscode.languages.registerDeclarationProvider(selector, semanticProvider);
 
 vscode.languages.registerFoldingRangeProvider(selector, foldingProvider);

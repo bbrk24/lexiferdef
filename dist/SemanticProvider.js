@@ -6,7 +6,7 @@ const phonemeClassType = 'class';
 const macroType = 'macro';
 const categoryType = 'enumMember';
 const tokenTypes = [phonemeClassType, macroType, categoryType];
-const tokenModifiers = ['declaration', 'definition'];
+const tokenModifiers = ['declaration', 'definition', 'readonly'];
 exports.legend = new vscode.SemanticTokensLegend(tokenTypes, tokenModifiers);
 class GroupNames {
     constructor() {
@@ -29,7 +29,7 @@ class SemanticProvider {
         this.groupNames = new GroupNames();
         this.allTokens = [];
     }
-    provideDocumentSemanticTokens(document) {
+    provideDocumentSemanticTokens(document, token) {
         const tokenBuilder = new vscode.SemanticTokensBuilder(exports.legend);
         this.getGroups(document);
         this.findRanges(document);
@@ -39,7 +39,7 @@ class SemanticProvider {
     provideDefinition(document, position, token) {
         var _a, _b, _c;
         // find the token
-        let containingToken = this.findContainingToken(position);
+        const containingToken = this.findContainingToken(position);
         if (!containingToken) {
             return undefined;
         }
@@ -64,13 +64,22 @@ class SemanticProvider {
     }
     provideReferences(document, position, context, token) {
         // find the token that contains it
-        let containingToken = this.findContainingToken(position);
+        const containingToken = this.findContainingToken(position);
         if (!containingToken) {
             return [];
         }
         // filter only the tokens with the same text, and map them to positions
         return this.allTokens.filter(el => el.text === containingToken.text)
             .map(el => new vscode.Location(document.uri, el.range));
+    }
+    prepareRename(document, position, token) {
+        const containingToken = this.findContainingToken(position);
+        if (containingToken) {
+            return containingToken.range;
+        }
+        else {
+            throw new Error('Can only rename macros, classes, and categories.');
+        }
     }
     provideRenameEdits(document, position, newName, token) {
         // first, see if there's even a change to be made
@@ -80,7 +89,7 @@ class SemanticProvider {
         }
         return new Promise((resolve, reject) => {
             // I'm not using the CancellationToken because there's practically no documentation on how to do so.
-            // if the new name is not legal, return a rejected promise
+            // if the new name is not legal, reject the promise
             switch (containingToken.type) {
                 case macroType:
                     if (newName[0] !== '$') {
@@ -104,9 +113,33 @@ class SemanticProvider {
             const edits = new vscode.WorkspaceEdit();
             this.allTokens.filter(el => el.text === containingToken.text)
                 .forEach(el => edits.replace(document.uri, el.range, newName));
-            
             resolve(edits);
         });
+    }
+    provideDeclaration(document, position, token) {
+        var _a, _b, _c;
+        const containingToken = this.findContainingToken(position);
+        if (!containingToken) {
+            return undefined;
+        }
+        let resultRange;
+        switch (containingToken.type) {
+            case categoryType:
+                // this is a bit harder
+                resultRange = (_a = this.allTokens.find(el => el.text === containingToken.text && el.modifiers.includes('declaration'))) === null || _a === void 0 ? void 0 : _a.range;
+                break;
+            case macroType:
+                resultRange = (_b = this.groupNames.macroNames.get(containingToken.text)) === null || _b === void 0 ? void 0 : _b.range;
+                break;
+            case phonemeClassType:
+                resultRange = (_c = this.groupNames.classNames.get(containingToken.text)) === null || _c === void 0 ? void 0 : _c.range;
+                break;
+        }
+        // this shouldn't happen but just in case
+        if (!resultRange) {
+            return undefined;
+        }
+        return new vscode.Location(document.uri, resultRange);
     }
     findContainingToken(position) {
         return this.allTokens.find(el => el.range.contains(position));
@@ -168,7 +201,7 @@ class SemanticProvider {
                             break;
                         }
                     }
-                    this.allTokens.push(new Token(i, startIndex, currMacro, macroType, ['declaration', 'definition']));
+                    this.allTokens.push(new Token(i, startIndex, currMacro, macroType, ['declaration', 'definition', 'readonly']));
                     for (let j = trimmedLine.indexOf('=') + 1; j < trimmedLine.length; ++j) {
                         if (this.groupNames.classNames.get(trimmedLine[j])) {
                             this.allTokens.push(new Token(i, startIndex + j, trimmedLine[j], phonemeClassType, []));
@@ -180,7 +213,7 @@ class SemanticProvider {
                     const itemName = trimmedLine.split(/\s|=/u)[0];
                     if (itemName.length === 1) {
                         // it's a class name
-                        this.allTokens.push(new Token(i, origLine.indexOf(itemName), itemName, phonemeClassType, ['declaration', 'definition']));
+                        this.allTokens.push(new Token(i, origLine.indexOf(itemName), itemName, phonemeClassType, ['declaration', 'definition', 'readonly']));
                     }
                     else if (this.groupNames.categoryNames.get(itemName)) {
                         // add one token for the category name, and then parse out any others it may reference
