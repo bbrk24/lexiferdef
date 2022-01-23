@@ -4,7 +4,7 @@ This extension provides syntax highlighting and semantic highlighting; and "go
 to definition", "go to references", "go to declaration", and "rename symbol"
 actions for Lexifer definition files.
 
-![Preview with the Solarized Dark theme](images/example.png)
+![Preview with the default Dark theme](images/example.png)
 
 ## Known Issues
 

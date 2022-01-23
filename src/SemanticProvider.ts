@@ -13,9 +13,9 @@ const tokenModifiers: Modifier[] = ['declaration', 'definition', 'readonly'];
 export const legend = new vscode.SemanticTokensLegend(Object.values(Type), tokenModifiers);
 
 class GroupNames {
-    classNames = new Map<string, vscode.Location>();
-    macroNames = new Map<string, vscode.Location>();
-    categoryNames = new Map<string, vscode.Location>();
+    readonly classNames = new Map<string, vscode.Location>();
+    readonly macroNames = new Map<string, vscode.Location>();
+    readonly categoryNames = new Map<string, vscode.Location>();
 }
 
 class Token {
