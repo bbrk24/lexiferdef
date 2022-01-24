@@ -1,6 +1,6 @@
 {
   "name": "lexiferdef",
-  "version": "0.1.16+1",
+  "version": "0.1.17",
   "engines": {
     "vscode": "^1.58.0"
   },
@@ -50,5 +50,6 @@
   "scripts": {
     "vscode:prepublish": "node_modules/.bin/eslint src/*.ts && tsc"
   },
-  "license": "MIT"
+  "license": "MIT",
+  "publisher": "bbrk24"
 }
